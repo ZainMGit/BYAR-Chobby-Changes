@@ -264,7 +264,7 @@ local function ApplySingleplayerSkirmishSetup(singleplayerDefault)
 		if not shortName then
 			return
 		end
-		local aiDisplayName = shortName .. "(" .. aiCounter .. ")"
+		local aiDisplayName = "BARbarianAI" .. "(" .. aiCounter .. ")"
 		if WG.Server.protocol == "spring" then
 			aiDisplayName = aiDisplayName:gsub(" ", "")
 		end
@@ -1142,12 +1142,13 @@ local function SetupInfoButtonsPanel(leftInfo, rightInfo, battle, battleID, myUs
 			or "Game Update may still be downloading"
 	local modoptionsLoaded = modoptions
 
-	local btnModoptions = Button:New {
+	local devMode = battleLobby.name == "singleplayer" and config.devMode
+	local btnModoptions, btnReloadModoptions = Button:New {
 		name = 'btnModoptions',
 		x = 5,
 		y = leftOffset,
 		height = 35,
-		right = 5,
+		right = devMode and "25%" or 5,
 		classname = "option_button",
 		caption = "Adv Options" .. "\b",
 		objectOverrideFont = config:GetFont(2),
@@ -1163,6 +1164,30 @@ local function SetupInfoButtonsPanel(leftInfo, rightInfo, battle, battleID, myUs
 		},
 		parent = leftInfo,
 	}
+	if devMode then
+		btnReloadModoptions = Button:New {
+			name = 'btnReloadModoptions',
+			x = "75%",
+			y = leftOffset,
+			height = 35,
+			right = 5,
+			classname = "option_button",
+			caption = "🔁",
+			objectOverrideFont = config:GetFont(2),
+			objectOverrideDisabledFont = config:GetFont(1),
+			hasDisabledFont = true,
+			tooltip = "Reload modoptions from game archive and show the panel.",
+			OnClick = {
+				function()
+					if modoptionsLoaded then
+						WG.ModoptionsPanel.LoadModoptions(battle.gameName, battleLobby, true)
+						WG.ModoptionsPanel.ShowModoptions()
+					end
+				end
+			},
+			parent = leftInfo,
+		}
+	end
 	leftOffset = leftOffset + 40
 
 
@@ -1348,6 +1373,7 @@ local function SetupInfoButtonsPanel(leftInfo, rightInfo, battle, battleID, myUs
 		btnPickMap:SetPos(nil, offset)
 		offset = offset + 38
 		btnModoptions:SetPos(nil, offset)
+		if btnReloadModoptions then btnReloadModoptions:SetPos(nil, offset) end
 		offset = offset + 40
 		btnOptionPresets:SetPos(nil, offset)
 		offset = offset + 40
@@ -1878,22 +1904,29 @@ local function AddTeamButtons(parent, offX, joinFunc, aiFunc, unjoinable, disall
 			end
 			teamFactionsSet.caption = ""
 		end
+		local factionBaseSize = 24
+		local armScale = 0.90
+		local corScale = 0.85
+		local armSize = math.floor(factionBaseSize * armScale)
+		local corSize = math.floor(factionBaseSize * corScale)
+		local armOff = math.floor((factionBaseSize - armSize) / 2)
+		local corOff = math.floor((factionBaseSize - corSize) / 2)
 		factionArm = Image:New {
 			name = "factionArm",
-			x = offX+95+5,
-			y = 0,
-			height = 24,
-			width = 24,
+			x = offX+95+5 + armOff,
+			y = armOff,
+			height = armSize,
+			width = armSize,
 			parent = parent,
 			keepAspect = true,
 			file = LUA_DIRNAME .. "configs/gameConfig/byar/sidepics/" .. "armada.png",
 		}
 		factionCor = Image:New {
 			name = "factionCor",
-			x = offX+95+5+24,
-			y = 0,
-			height = 24,
-			width = 24,
+			x = offX+95+5+24 + corOff,
+			y = corOff,
+			height = corSize,
+			width = corSize,
 			parent = parent,
 			keepAspect = true,
 			file = LUA_DIRNAME .. "configs/gameConfig/byar/sidepics/" .. "cortex.png",
